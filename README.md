@@ -46,3 +46,10 @@ Run Tests:
     * Current principal balance at given month
     * The aggregate amount of principal already paid
     * The aggregate amount of interest already paid
+
+The following items are optional:
+- Use pytests or other test framework to test your endpoints and
+financial calculations
+- Use an ORM + SQL DB to save users and loans. We’d recommend using
+SQLAlchemy or SQLModel, with an in-memory instance of SQLite -
+but that is up to you.
