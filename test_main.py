@@ -1,15 +1,7 @@
 from fastapi.testclient import TestClient
 from main import app
-from model import Loan
+from model.loan import Loan
 import pytest
-
-# @pytest.fixture(autouse=True)
-# def run_around_tests():
-#     # Runs before each test
-#     loans = {}
-#     yield
-#     # Runs after each test
-#     loans = {}
 
 LOAN_ONE = Loan(id=1, amount=1000, term=12, interest_rate=0.1, status="active")
 LOAN_TWO = Loan(id=2, amount=1000, term=24, interest_rate=0.08, status="active")

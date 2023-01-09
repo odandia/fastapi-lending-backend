@@ -3,14 +3,15 @@
 **Setup**
 
 Prereqs:
- * python3
- * pip
+ * python3.11 (introduces asyncio, used by fastapi)
+ * python3.11-distutils (required by python3.11)
+ * pip3
  * virtualenv
 
 Install Dependencies:
 ```
  $ cd greystone-osman
- $ virtualenv -p python3 venv
+ $ virtualenv -p python3.11 venv
  $ source venv/bin/activate
  $ pip install -r requirements.txt
 ```
@@ -30,7 +31,7 @@ Run Tests:
  
 **Requirements** 
 * Create a User
-* Create Loan
+* Create a Loan
 * Fetch all Loans for a User
     * Amount
     * Annual Interest Rate
