@@ -37,6 +37,11 @@ class LoanScheduleSchema(BaseModel):
     interest_payment: float
     close_balance: float
 
+class LoanSummarySchema(BaseModel):
+    current_principal: float
+    aggregate_principal_paid: float
+    aggregate_interest_paid: float
+
 def validateLoan(loan: LoanSchemaBase):
     '''
     Validate the input data for loan creation
@@ -72,6 +77,12 @@ def create_loan(db: Session, loanData: LoanSchemaBase):
     db.refresh(db_loan)
     return db_loan
 
+def get_loan_by_id(db: Session, id: int) -> Loan | None :
+    return db.query(Loan).filter(Loan.id == id).first()
+
+def get_loans_by_owner_id(db: Session, owner_id: int, skip: int=0, limit: int=100):
+    return db.query(Loan).filter(Loan.owner_id == owner_id).offset(skip).limit(limit).all()
+
 def update_loan(db: Session, loan: Loan, loanData: LoanSchemaBase):
     # I'm not sure why VSCode doesn't like these -- runs fine
     # I can get rid of the red squigglies by adding type hints to the attributes
@@ -85,22 +96,16 @@ def update_loan(db: Session, loan: Loan, loanData: LoanSchemaBase):
     db.refresh(loan)
     return loan
 
-def get_loan_by_id(db: Session, id: int) -> Loan | None :
-    return db.query(Loan).filter(Loan.id == id).first()
 
-def get_loans_by_owner_id(db: Session, owner_id: int, skip: int=0, limit: int=100):
-    return db.query(Loan).filter(Loan.owner_id == owner_id).offset(skip).limit(limit).all()
+# TODO: add some DP/caching to these? may get called often for the same params
+# but Zac says scale is not a priority, so let's not prematurely optimize
+def calc_monthly_total_payment(apr: float, balance: float, term: int):
+    temp_val = ((apr / 12) + 1) ** term
+    return balance * ((apr / 12 * temp_val) / (temp_val - 1))
 
 def calc_monthly_interest(apr: float, balance: float):
     return balance * apr / 12
 
-# TODO: add some caching to these? may get called often for the same params
-def calc_monthly_total_payment(apr: float, balance: float, term: int):
-    # monthly_interest_payment = calc_monthly_interest(apr, balance)
-    temp_val = ((apr / 12) + 1) ** term
-    return balance * ((apr / 12 * temp_val) / (temp_val - 1))
-
-# ^^calls like these, could definitely use some DP
 def calc_monthly_principal_payment(apr: float, balance: float, term: int):
     return calc_monthly_total_payment(apr, balance, term) - calc_monthly_interest(apr, balance)
 
@@ -128,19 +133,31 @@ def get_loan_schedule(apr: float, amount: float, term: int):
 
     return schedule
 
-    # def __init__(self, id, amount,term, interest_rate, status):
-    #     super().__init__(id=id, amount=amount, term=term, interest_rate=interest_rate, status=status)
+def get_loan_summary_for_loan(loan: LoanSchema, month: int):
+    return get_loan_summary(loan.apr, loan.amount, loan.term, month)
 
-    # def to_json(self):
-    #     return {
-    #         "id": self.id,
-    #         "amount": self.amount,
-    #         "term": self.term,
-    #         "interest_rate": self.interest_rate,
-    #         "status": self.status,
-    #         "owner_id": self.owner_id,
-    #     }
+def get_loan_summary(apr: float, amount: float, term: int, month: int):
+    """
+    Generates a summary of the loan for the given month.
+    Month 0 is the initial state of the loan, Month 1 is after the first payment.
+    """
+    total_interest = 0
+    total_principal = 0
+    current_principal = amount
 
-    # ## TODO: Amortized calculation
-    # def calculate_interest(self):
-    #     return self.amount * self.interest_rate * self.term
+    if month < 0:
+        raise ValueError("Month must be greater than or equal to zero")
+    if month > term:
+        raise ValueError("Month must be less than or equal to the loan term")
+    if month > 0:
+        schedule = get_loan_schedule(apr, amount, term)
+        for i in range (0, month):
+            total_interest += schedule[i].interest_payment
+            total_principal += schedule[i].principal_payment
+            current_principal = schedule[i].close_balance
+    return {
+        "current_principal": current_principal,
+        "aggregate_principal_paid": total_principal,
+        "aggregate_interest_paid": total_interest
+    }
+

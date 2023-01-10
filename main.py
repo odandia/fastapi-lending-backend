@@ -73,6 +73,18 @@ def get_loan_schedule(id: int, db: Session = Depends(get_db)):
 
     return loans.get_loan_schedule_for_loan(loan)
 
+@app.get("/loans/{loan_id}/month/{month}", response_model=loans.LoanSummarySchema)
+def get_loan_summary(loan_id: int, month: int, db: Session = Depends(get_db)):
+    loan = loans.get_loan_by_id(db=db, id=loan_id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan %d not found" % loan_id )
+
+    try:
+        return loans.get_loan_summary_for_loan(loan, month)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # # route to get a list of all loans
 # @app.get("/loans", response_model=List[Loan])
 # async def read_loans():
