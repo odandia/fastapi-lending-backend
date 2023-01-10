@@ -6,7 +6,7 @@ from typing import List
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from database.db import SessionLocal, engine, Base
-from model import user, loan
+from model import loans, users
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,51 +19,35 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/users", response_model=user.UserSchema)
-def create_user(userData: user.UserSchemaBase, db: Session = Depends(get_db)):
-    return user.create_user(db=db, userData=userData)
+# redirect / to /docs
+@app.get("/", response_class=RedirectResponse)
+async def redirect_to_docs():
+    return "/docs"
 
+@app.post("/users", response_model=users.UserSchema)
+def create_user(userData: users.UserSchemaBase, db: Session = Depends(get_db)):
+    return users.create_user(db=db, userData=userData)
 
-@app.get("/users", response_model=List[user.UserSchema])
+@app.get("/users", response_model=List[users.UserSchema])
 def list_users(db: Session = Depends(get_db)):
-    return user.get_users(db=db)
+    return users.get_users(db=db)
 
+# route to create a new loan
+@app.post("/loans", response_model=loans.LoanSchema)
+def create_loan(loanData: loans.LoanSchemaBase, db: Session = Depends(get_db)):
+    err = loans.validateLoan(loanData)
+    if err:
+        raise err
 
-# # map of ID to Loan
-# app.state.loans = {}
+    owner = users.get_user_by_id(db=db, id=loanData.owner_id)
+    if not owner:
+        raise HTTPException(status_code=404, detail="User %d not found" % loanData.owner_id )
 
-# # redirect / to /docs
-# @app.get("/", response_class=RedirectResponse)
-# async def redirect_to_docs():
-#     return "/docs"
+    return loans.create_loan(db=db, loanData=loanData)
 
-# # route to create a new loan
-# @app.post("/loans", response_model=Loan)
-# async def create_loan(loan: Loan):
-#     err = validate_loan(loan)
-#     if err:
-#         raise err
-#     app.state.loans[loan.id] = loan
-#     return loan
-
-# def validate_loan(loan: Loan):
-#     print(loan)
-#     if loan.id in app.state.loans:
-#         return HTTPException(status_code=400, detail="Loan %d already exists" % loan.id )
-#     if not isinstance(loan.amount, float):
-#         return HTTPException(status_code=400, detail="Loan amount must be a float" )
-#     if loan.amount <= 0:
-#         return HTTPException(status_code=400, detail="Loan amount must be greater than zero" )
-#     if not isinstance(loan.interest_rate, float):
-#         return HTTPException(status_code=400, detail="Loan interest_rate must be a float" )
-#     if not isinstance(loan.term, int):
-#         return HTTPException(status_code=400, detail="Loan term must be an int" )
-#     if not isinstance(loan.status, str):
-#         return HTTPException(status_code=400, detail="Loan status must be a string" )
-#     if loan.status not in ["active", "inactive"]:
-#         return HTTPException(status_code=400, detail="Loan status must be either 'active' or 'inactive'" )
-#     else:
-#         return None
+@app.get("/users/{user_id}/loans", response_model=List[loans.LoanSchema])
+def list_user_loans(user_id: int, db: Session = Depends(get_db)):
+    return loans.get_loans_by_owner_id(db=db, owner_id=user_id)
 
 # # route to get a list of all loans
 # @app.get("/loans", response_model=List[Loan])

@@ -3,6 +3,12 @@ from sqlalchemy.orm import relationship, Session
 from database.db import Base
 from pydantic import BaseModel
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String)
+    loans = relationship("Loan", back_populates="owner")
 
 class UserSchemaBase(BaseModel):
     username: str
@@ -12,13 +18,6 @@ class UserSchema(UserSchemaBase):
 
     class Config:
         orm_mode = True
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String)
-    loans = relationship("Loan", back_populates="owner")
 
 def create_user(db: Session, userData: UserSchemaBase):
     db_user = User(**userData.dict())
