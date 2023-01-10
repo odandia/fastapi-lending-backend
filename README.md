@@ -30,14 +30,14 @@ Run Tests:
  
  
 **Requirements** 
-* Create a User
-* Create a Loan
-* Fetch all Loans for a User
-    * Amount
-    * Annual Interest Rate
-    * Loan Term in months
+* ./ Create a User
+* ./ Create a Loan
+* ./ Fetch all Loans for a User
+    * ./ Amount
+    * ./ Annual Interest Rate
+    * ./ Loan Term in months
 * Share Loan with another User
-* Fetch Loan Schedule
+* ./ Fetch Loan Schedule
     {
         Month: n
         Remaining balance: $xxxx,
@@ -51,6 +51,13 @@ Run Tests:
 The following items are optional:
 - Use pytests or other test framework to test your endpoints and
 financial calculations
-- Use an ORM + SQL DB to save users and loans. We’d recommend using
+- ./ Use an ORM + SQL DB to save users and loans. We’d recommend using
 SQLAlchemy or SQLModel, with an in-memory instance of SQLite -
 but that is up to you.
+
+We’ll be scoring you based on,
+- Proper HTTP methods
+- Error handling and validation
+- API structuring
+- Calculation Accuracy
+- Git commits

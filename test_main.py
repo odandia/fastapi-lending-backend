@@ -1,10 +1,10 @@
 from fastapi.testclient import TestClient
 from main import app
-from model.loan import Loan
+from model.loans import LoanSchema
 import pytest
 
-LOAN_ONE = Loan(id=1, amount=1000, term=12, interest_rate=0.1, status="active")
-LOAN_TWO = Loan(id=2, amount=1000, term=24, interest_rate=0.08, status="active")
+LOAN_ONE = LoanSchema(id=1, amount=1000, term=12, interest_rate=0.1, status="active")
+LOAN_TWO = LoanSchema(id=2, amount=1000, term=24, interest_rate=0.08, status="active")
 
 MULTIPLE_LOANS = {
     1: LOAN_ONE,

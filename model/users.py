@@ -5,9 +5,10 @@ from pydantic import BaseModel
 
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
+
     username = Column(String)
+
     loans = relationship("Loan", back_populates="owner")
 
 class UserSchemaBase(BaseModel):

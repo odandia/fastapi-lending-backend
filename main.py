@@ -21,7 +21,7 @@ def get_db():
 
 # redirect / to /docs
 @app.get("/", response_class=RedirectResponse)
-async def redirect_to_docs():
+def redirect_to_docs():
     return "/docs"
 
 @app.post("/users", response_model=users.UserSchema)
@@ -45,9 +45,33 @@ def create_loan(loanData: loans.LoanSchemaBase, db: Session = Depends(get_db)):
 
     return loans.create_loan(db=db, loanData=loanData)
 
+@app.put("/loans/{id}", response_model=loans.LoanSchema)
+def update_loan(id: int, loanData: loans.LoanSchemaBase, db: Session = Depends(get_db)):
+    err = loans.validateLoan(loanData)
+    if err:
+        raise err
+
+    loan = loans.get_loan_by_id(db=db, id=id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan %d not found" % id )
+
+    return loans.update_loan(db=db, loan=loan, loanData=loanData)
+
 @app.get("/users/{user_id}/loans", response_model=List[loans.LoanSchema])
 def list_user_loans(user_id: int, db: Session = Depends(get_db)):
+    user = users.get_user_by_id(db=db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User %d not found" % user_id )
+
     return loans.get_loans_by_owner_id(db=db, owner_id=user_id)
+
+@app.get("/loans/{id}", response_model=List[loans.LoanScheduleSchema])
+def get_loan_schedule(id: int, db: Session = Depends(get_db)):
+    loan = loans.get_loan_by_id(db=db, id=id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan %d not found" % id )
+
+    return loans.get_loan_schedule_for_loan(loan)
 
 # # route to get a list of all loans
 # @app.get("/loans", response_model=List[Loan])
