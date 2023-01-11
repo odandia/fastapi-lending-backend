@@ -1,18 +1,18 @@
-# Greystone / Osman Dandia
+# Osman Dandia / Lending App
 
 ## Setup
 
 Prereqs:
 ```
  * python3.11 (fastapi requires 3.7+)
- * python3.11-distutils (required by python3.11, I had to install it separately)
+ * python3.11-distutils (required by python3.11, I had to install it separately on ubuntu)
  * pip3
  * virtualenv
 ```
 
 Install Dependencies:
 ```
- $ cd greystone-osman
+ $ cd <repo>
  $ virtualenv -p python3.11 venv
  $ source venv/bin/activate
  $ pip install -r requirements.txt
@@ -23,7 +23,6 @@ Install Dependencies:
  $ python3 main.py
 ```
  
-
  
 ## Run Tests:
 ```
@@ -33,10 +32,10 @@ Install Dependencies:
 ## Notes
 * Loading the index at `localhost:8000` will redirect to `localhost:8000/docs`, where you can view the OpenAPI spec and use the interface to test calls to the API. 
   * The OpenAPI Spec can also be imported into a tool like Postman for API testing. 
-* Loan schedule math comes out a little off (slightly over or underpays by end of term), not entirely sure why. Amortization math was ripped from investopedia.
-* Doing user authorization without authentication is kinda wonky. Consider the provided `user_id` param to represent an authenticated user, and it all makes sense. 
-    * Creates/Updates require ownership
-    * Views require ownership or sharing
+* Loan schedule math comes out off by a fraction (slightly over or underpays by end of term), not entirely sure why. Amortization math was ripped from investopedia, could use a review from someone more versed in lending. 
+* Doing user authorization without authentication (for loan sharing) is kinda wonky. Consider the provided `user_id` param to represent an authenticated user, and it all makes sense. 
+    * Updates require ownership
+    * Reads require ownership or sharing
  
 ### Requirements
 
