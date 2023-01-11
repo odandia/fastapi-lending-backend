@@ -6,15 +6,19 @@ from fastapi import HTTPException
 
 class Loan(Base):
     __tablename__ = "loans"
-    id = Column(Integer, primary_key=True, index=True)
+    # I'm not sure why VSCode doesn't like these -- it runs fine.
+    # Without these type hints, it complains everywhere they're used
+    # So probably better to keep the warnings in one place
+    id : int = Column(Integer, primary_key=True, index=True)
 
-    amount = Column(Float)
-    apr = Column(Float)
-    term = Column(Integer)
-    status = Column(String)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    amount : float = Column(Float)
+    apr : float = Column(Float)
+    term : int = Column(Integer)
+    status : str = Column(String)
+    owner_id : int = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="loans")
+    users = relationship("User", secondary="loan_access", back_populates="shared_loans")
 
 class LoanSchemaBase(BaseModel):
     amount: float
@@ -71,22 +75,19 @@ def validateLoan(loan: LoanSchemaBase):
         return None
 
 def create_loan(db: Session, loanData: LoanSchemaBase):
-    db_loan = Loan(**loanData.dict())
-    db.add(db_loan)
+    loan = Loan(**loanData.dict())
+    db.add(loan)
     db.commit()
-    db.refresh(db_loan)
-    return db_loan
+    db.refresh(loan)
+    return loan
 
-def get_loan_by_id(db: Session, id: int) -> Loan | None :
+def get_loan_by_id(db: Session, id: int):
     return db.query(Loan).filter(Loan.id == id).first()
 
 def get_loans_by_owner_id(db: Session, owner_id: int, skip: int=0, limit: int=100):
     return db.query(Loan).filter(Loan.owner_id == owner_id).offset(skip).limit(limit).all()
 
 def update_loan(db: Session, loan: Loan, loanData: LoanSchemaBase):
-    # I'm not sure why VSCode doesn't like these -- runs fine
-    # I can get rid of the red squigglies by adding type hints to the attributes
-    # in the Loan constructor... but then it complains about the type hints
     loan.amount = loanData.amount
     loan.apr = loanData.apr
     loan.term = loanData.term
@@ -96,7 +97,7 @@ def update_loan(db: Session, loan: Loan, loanData: LoanSchemaBase):
     db.refresh(loan)
     return loan
 
-
+# https://www.investopedia.com/terms/a/amortization_schedule.asp
 # TODO: add some DP/caching to these? may get called often for the same params
 # but Zac says scale is not a priority, so let's not prematurely optimize
 def calc_monthly_total_payment(apr: float, balance: float, term: int):

@@ -3,4 +3,4 @@ venv
 .vscode
 .pytest_cache
 __pycache__
-database/greystone.db
+database/*.db
